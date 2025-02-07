@@ -23,10 +23,12 @@ export class GPT {
         let messages = [{'role': 'system', 'content': systemMessage}].concat(turns);
 
         const pack = {
-            model: this.model_name || "gpt-3.5-turbo",
+            model: this.model_name || "gpt-4o",
             messages,
             stop: stop_seq,
-            ...(this.params || {})
+            max_tokens: 16384, // Controls response length
+            // gpt-4o has 128k context window, gpt-4-32k has 32k
+            ...(this.model_name.includes('gpt-4o') ? { max_tokens: 16384 } : {})
         };
         if (this.model_name.includes('o1')) {
             pack.messages = strictFormat(messages);
@@ -60,8 +62,9 @@ export class GPT {
         if (text.length > 8191)
             text = text.slice(0, 8191);
         const embedding = await this.openai.embeddings.create({
-            model: this.model_name || "text-embedding-3-small",
+            model: this.model_name || "text-embedding-3-large",
             input: text,
+            dimensions: 3072,
             encoding_format: "float",
         });
         return embedding.data[0].embedding;
