@@ -57,7 +57,14 @@ export class ActionManager {
     }
 
     async _executeAction(actionLabel, actionFn, timeout = 10) {
-        let TIMEOUT;
+        let TIMEOUT = null;
+
+        // Cooldown system
+        if (this.executing) {
+            const cooldown = (settings.action_cooldown_seconds || 15) * 1000;
+            console.log(`[${new Date().toISOString()}] Action cooldown: ${cooldown/1000}s`);
+            await new Promise(resolve => setTimeout(resolve, cooldown));
+        }
         try {
             console.log('executing code...\n');
 
