@@ -54,6 +54,11 @@ class Conversation {
             return;
         }
         
+        // Update external prompt tracker
+        if (message.sender && message.sender !== this.name) {
+            this.agent.selfPrompter?.updateExternalPromptTime();
+        }
+        
         // Existing message processing logic
         const response = await this.processMessage(message);
         
@@ -312,8 +317,8 @@ The logic is as follows:
 - New messages received during the delay will reset the delay following this logic, and be queued to respond in bulk
 */
 const talkOverActions = ['stay', 'followPlayer', 'mode:']; // all mode actions
-const fastDelay = 200;
-const longDelay = 5000;
+const fastDelay = 5;
+const longDelay = 15;
 async function _scheduleProcessInMessage(sender, received, convo) {
     if (convo.inMessageTimer)
         clearTimeout(convo.inMessageTimer);
@@ -396,3 +401,4 @@ async function _resumeSelfPrompter() {
         agent.self_prompter.start();
     }
 }
+
