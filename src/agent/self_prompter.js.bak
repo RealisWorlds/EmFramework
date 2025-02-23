@@ -7,6 +7,8 @@ export class SelfPrompter {
         this.prompt = '';
         this.idle_time = 0;
         this.cooldown = 10000;
+        this.lastExternalPromptTime = 0;
+        this.idleThreshold = 30000; // 30 seconds
     }
 
     start(prompt) {
@@ -24,8 +26,19 @@ export class SelfPrompter {
         this.startLoop();
     }
 
-    setPrompt(prompt) {
-        this.prompt = prompt;
+    setPrompt() {
+        const currentIdleTime = Date.now() - this.agent.lastActionTime;
+        const externalTimeout = (settings.external_prompt_timeout_seconds || 10) * 1000;
+        const isSystemIdle = !this.agent.actionManager.executing;
+        const noRecentExternal = Date.now() - this.lastExternalPromptTime > externalTimeout;
+
+        if (currentIdleTime > this.idleThreshold && isSystemIdle && noRecentExternal) {
+            this._triggerSelfPrompt();
+        }
+    }
+
+    _triggerSelfPrompt() {
+        this.startLoop();
     }
 
     async startLoop() {
@@ -38,7 +51,7 @@ export class SelfPrompter {
         let no_command_count = 0;
         const MAX_NO_COMMAND = 3;
         while (!this.interrupt) {
-            const msg = `You are self-prompting with the goal: '${this.prompt}'. Your next response MUST contain a command with this syntax: !commandName. Respond:`;
+            const msg = `You are self-prompting with the goal: '${this.prompt}'. Your next response MUST contain a command !withThisSyntax. Respond:`;
             
             let used_command = await this.agent.handleMessage('system', msg, -1);
             if (!used_command) {

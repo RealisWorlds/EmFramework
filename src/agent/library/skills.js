@@ -3,6 +3,13 @@ import * as world from "./world.js";
 import pf from 'mineflayer-pathfinder';
 import Vec3 from 'vec3';
 
+// Configuration
+const COMMAND_DELAY_MS = 20;
+
+// Helper function for delay
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 export function log(bot, message) {
     bot.output += message + '\n';
@@ -277,7 +284,6 @@ export async function clearNearestFurnace(bot) {
 
 }
 
-
 export async function attackNearest(bot, mobType, kill=true) {
     /**
      * Attack mob of the given type.
@@ -379,8 +385,6 @@ export async function defendSelf(bot, range=9) {
         log(bot, `No enemies nearby to defend self from.`);
     return attacked;
 }
-
-
 
 export async function collectBlock(bot, blockType, num=1, exclude=null) {
     /**
@@ -485,7 +489,6 @@ export async function pickupNearbyItems(bot) {
     return true;
 }
 
-
 export async function breakBlockAt(bot, x, y, z) {
     /**
      * Break the block at the given position. Will use the bot's equipped item.
@@ -502,6 +505,7 @@ export async function breakBlockAt(bot, x, y, z) {
     let block = bot.blockAt(Vec3(x, y, z));
     if (block.name !== 'air' && block.name !== 'water' && block.name !== 'lava') {
         if (bot.modes.isOn('cheat')) {
+            await delay(COMMAND_DELAY_MS);
             let msg = '/setblock ' + Math.floor(x) + ' ' + Math.floor(y) + ' ' + Math.floor(z) + ' air';
             bot.chat(msg);
             log(bot, `Used /setblock to break block at ${x}, ${y}, ${z}.`);
@@ -534,7 +538,6 @@ export async function breakBlockAt(bot, x, y, z) {
     return true;
 }
 
-
 export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dontCheat=false) {
     /**
      * Place the given block type at the given position. It will build off from any adjacent blocks. Will fail if there is a block in the way or nothing to build off of.
@@ -566,6 +569,7 @@ export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dont
             }
         }
 
+        await delay(COMMAND_DELAY_MS);
         // invert the facing direction
         let face = placeOn === 'north' ? 'south' : placeOn === 'south' ? 'north' : placeOn === 'east' ? 'west' : 'east';
         if (blockType.includes('torch') && placeOn !== 'bottom') {
@@ -595,8 +599,10 @@ export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dont
         let msg = '/setblock ' + Math.floor(x) + ' ' + Math.floor(y) + ' ' + Math.floor(z) + ' ' + blockType;
         bot.chat(msg);
         if (blockType.includes('door'))
+            await delay(COMMAND_DELAY_MS);
             bot.chat('/setblock ' + Math.floor(x) + ' ' + Math.floor(y+1) + ' ' + Math.floor(z) + ' ' + blockType + '[half=upper]');
         if (blockType.includes('bed'))
+            await delay(COMMAND_DELAY_MS);
             bot.chat('/setblock ' + Math.floor(x) + ' ' + Math.floor(y) + ' ' + Math.floor(z-1) + ' ' + blockType + '[part=head]');
         log(bot, `Used /setblock to place ${blockType} at ${target_dest}.`);
         return true;
@@ -880,7 +886,6 @@ export async function consume(bot, itemName="") {
     return true;
 }
 
-
 export async function giveToPlayer(bot, itemType, username, num=1) {
     /**
      * Give one of the specified item to the specified player
@@ -932,7 +937,6 @@ export async function giveToPlayer(bot, itemType, username, num=1) {
     return false;
 }
 
-
 export async function goToPosition(bot, x, y, z, min_distance=2) {
     /**
      * Navigate to the given position.
@@ -951,6 +955,7 @@ export async function goToPosition(bot, x, y, z, min_distance=2) {
         return false;
     }
     if (bot.modes.isOn('cheat')) {
+        await delay(COMMAND_DELAY_MS);
         bot.chat('/tp @s ' + x + ' ' + y + ' ' + z);
         log(bot, `Teleported to ${x}, ${y}, ${z}.`);
         return true;
@@ -1020,6 +1025,7 @@ export async function goToPlayer(bot, username, distance=3) {
      **/
 
     if (bot.modes.isOn('cheat')) {
+        await delay(COMMAND_DELAY_MS);
         bot.chat('/tp @s ' + username);
         log(bot, `Teleported to ${username}.`);
         return true;
@@ -1039,7 +1045,6 @@ export async function goToPlayer(bot, username, distance=3) {
 
     log(bot, `You have reached ${username}.`);
 }
-
 
 export async function followPlayer(bot, username, distance=4) {
     /**
@@ -1076,7 +1081,6 @@ export async function followPlayer(bot, username, distance=4) {
     return true;
 }
 
-
 export async function moveAway(bot, distance) {
     /**
      * Move away from current position in any direction.
@@ -1100,6 +1104,7 @@ export async function moveAway(bot, distance) {
             let x = Math.floor(last_move.x);
             let y = Math.floor(last_move.y);
             let z = Math.floor(last_move.z);
+            await delay(COMMAND_DELAY_MS);
             bot.chat('/tp @s ' + x + ' ' + y + ' ' + z);
             return true;
         }
@@ -1281,6 +1286,7 @@ export async function tillAndSow(bot, x, y, z, seedType=null) {
                 seedType = seedType.replace(remove, '');
             }
         }
+        await delay(COMMAND_DELAY_MS);
         placeBlock(bot, 'farmland', x, y, z);
         placeBlock(bot, seedType, x, y+1, z);
         return true;

@@ -17,8 +17,6 @@ class Conversation {
         this.blocked = false;
         this.in_queue = [];
         this.inMessageTimer = null;
-        this.lastResponseTime = 0;
-        this.responseQueue = [];
     }
 
     reset() {
@@ -40,41 +38,7 @@ class Conversation {
         if (agent.last_sender === this.name)
             agent.last_sender = null;
     }
-    async receiveMessage(message) {
-        // Self-reference check
-        if (message.toLowerCase().includes(this.name.toLowerCase())) {
-            console.log(`Ignoring self-referential prompt containing agent name: ${this.name}`);
-            return { code: 0, message: 'Self-referential prompt ignored' };
-        }
 
-        // Cooldown check
-        if (Date.now() - this.lastResponseTime < (settings.response_cooldown_seconds * 1000)) {
-            console.log(`[Cooldown] Ignoring prompt during response period`);
-            this.responseQueue.push(message);
-            return;
-        }
-        
-        // Update external prompt tracker
-        if (message.sender && message.sender !== this.name) {
-            this.agent.selfPrompter?.updateExternalPromptTime();
-        }
-        
-        // Existing message processing logic
-        const response = await this.processMessage(message);
-        
-        // Add post-response cooldown
-        this.lastResponseTime = Date.now();
-        setTimeout(() => this.processQueue(), settings.response_cooldown_seconds * 1000);
-        
-        return response;
-    }
-
-    async processQueue() {
-        if (this.responseQueue.length > 0) {
-            const nextMessage = this.responseQueue.shift();
-            return this.receiveMessage(nextMessage);
-        }
-    }
     queue(message) {
         this.in_queue.push(message);
     }
@@ -317,8 +281,8 @@ The logic is as follows:
 - New messages received during the delay will reset the delay following this logic, and be queued to respond in bulk
 */
 const talkOverActions = ['stay', 'followPlayer', 'mode:']; // all mode actions
-const fastDelay = 5;
-const longDelay = 15;
+const fastDelay = 200;
+const longDelay = 5000;
 async function _scheduleProcessInMessage(sender, received, convo) {
     if (convo.inMessageTimer)
         clearTimeout(convo.inMessageTimer);
@@ -401,4 +365,3 @@ async function _resumeSelfPrompter() {
         agent.self_prompter.start();
     }
 }
-
